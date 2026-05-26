@@ -447,3 +447,7 @@ async def favorite_resume(
         return {
             "message": "Favorite update failed"
         }
+    
+@app.get("/")
+async def root():
+    return {"message": "API running"}
