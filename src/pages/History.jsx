@@ -4,6 +4,15 @@ import Navbar from '../components/Navbar';
 import generatePDF from '../utils/generatePDF';
 import { toast } from 'react-toastify';
 import HistorySkeleton from '../components/HistorySkeleton';
+import {
+  FaStar,
+  FaRegStar,
+  FaEye,
+  FaChartBar,
+  FaDownload,
+  FaEdit,
+  FaTrash,
+} from 'react-icons/fa';
 
 function History() {
   const [resumes, setResumes] = useState([]);
@@ -233,7 +242,8 @@ function History() {
                   </p>
                 )}
 
-                <div className='flex flex-wrap gap-3 mt-6'>
+                <div className='flex items-center justify-between mt-6'>
+                  {/* Star button top-right */}
                   <button
                     onClick={async () => {
                       try {
@@ -252,97 +262,111 @@ function History() {
                         fetchHistory();
                       } catch (error) {
                         console.log(error);
-
                         toast.error('Failed to update favorite');
                       }
                     }}
-                    className={`px-5 py-2 rounded-xl font-semibold ${
-                      resume.is_favorite
-                        ? 'bg-purple-500 hover:bg-purple-600'
-                        : 'bg-gray-700 hover:bg-gray-600'
-                    }`}
+                    className='text-2xl'
                   >
-                    {resume.is_favorite ? '⭐ Starred' : '☆ Star'}
+                    {resume.is_favorite ? (
+                      <FaStar className='text-yellow-400 hover:scale-110 transition' />
+                    ) : (
+                      <FaRegStar className='text-gray-400 hover:text-yellow-400 hover:scale-110 transition' />
+                    )}
                   </button>
-                  <button
-                    onClick={() => {
-                      setEditingId(resume._id);
 
-                      setNewFilename(resume.filename.replace('.pdf', ''));
-                    }}
-                    className='bg-purple-500 hover:bg-purple-600 px-5 py-2 rounded-xl font-semibold'
-                  >
-                    Rename
-                  </button>
-                  <button
-                    onClick={() => deleteResume(resume._id)}
-                    className='bg-red-500 hover:bg-red-600 px-5 py-2 rounded-xl font-semibold'
-                  >
-                    Delete
-                  </button>
-                  <button
-                    onClick={async () => {
-                      try {
-                        const token = localStorage.getItem('token');
+                  {/* Other action buttons */}
+                  <div className='flex flex-wrap gap-3'>
+                    {/* Rename */}
+                    <button
+                      onClick={() => {
+                        setEditingId(resume._id);
+                        setNewFilename(resume.filename.replace('.pdf', ''));
+                      }}
+                      className='bg-purple-500 hover:bg-purple-600 p-3 rounded-xl'
+                      title='Rename'
+                    >
+                      <FaEdit />
+                    </button>
 
-                        const response = await API.get(
-                          `/resume-link/${resume._id}`,
-                          {
-                            headers: {
-                              Authorization: `Bearer ${token}`,
+                    {/* Delete */}
+                    <button
+                      onClick={() => deleteResume(resume._id)}
+                      className='bg-red-500 hover:bg-red-600 p-3 rounded-xl'
+                      title='Delete'
+                    >
+                      <FaTrash />
+                    </button>
+
+                    {/* View Resume */}
+                    <button
+                      onClick={async () => {
+                        try {
+                          const token = localStorage.getItem('token');
+
+                          const response = await API.get(
+                            `/resume-link/${resume._id}`,
+                            {
+                              headers: {
+                                Authorization: `Bearer ${token}`,
+                              },
                             },
-                          },
+                          );
+
+                          window.open(response.data.file_url, '_blank');
+                        } catch (error) {
+                          console.log(error);
+                          toast.error('Failed to open resume');
+                        }
+                      }}
+                      className='bg-yellow-500 hover:bg-yellow-600 p-3 rounded-xl'
+                      title='View Resume'
+                    >
+                      <FaEye />
+                    </button>
+
+                    {/* Open Report */}
+                    <button
+                      onClick={() => {
+                        localStorage.setItem(
+                          'atsData',
+                          JSON.stringify({
+                            ats_score: resume.ats_score,
+                            matched_skills: resume.matched_skills,
+                            missing_skills: resume.missing_skills,
+                            suggestions: resume.suggestions,
+                          }),
                         );
 
-                        window.open(response.data.file_url, '_blank');
-                      } catch (error) {
-                        console.log(error);
+                        localStorage.setItem(
+                          'questions',
+                          JSON.stringify(resume.interview_questions || []),
+                        );
 
-                        toast.error('Failed to open resume');
-                      }
-                    }}
-                    className='bg-yellow-500 hover:bg-yellow-600 px-5 py-2 rounded-xl font-semibold'
-                  >
-                    View Resume
-                  </button>
-                  <button
-                    onClick={() => {
-                      localStorage.setItem(
-                        'atsData',
-                        JSON.stringify({
+                        window.location.href = '/dashboard';
+                      }}
+                      className='bg-green-500 hover:bg-green-600 p-3 rounded-xl'
+                      title='Open Report'
+                    >
+                      <FaChartBar />
+                    </button>
+
+                    {/* Download PDF */}
+                    <button
+                      onClick={() =>
+                        generatePDF({
                           ats_score: resume.ats_score,
                           matched_skills: resume.matched_skills,
                           missing_skills: resume.missing_skills,
                           suggestions: resume.suggestions,
-                        }),
-                      );
-
-                      localStorage.setItem(
-                        'questions',
-                        JSON.stringify(resume.interview_questions || []),
-                      );
-
-                      window.location.href = '/dashboard';
-                    }}
-                    className='bg-green-500 hover:bg-green-600 px-5 py-2 rounded-xl font-semibold'
-                  >
-                    Open Report
-                  </button>
-
-                  <button
-                    onClick={() =>
-                      generatePDF({
-                        ats_score: resume.ats_score,
-                        matched_skills: resume.matched_skills,
-                        missing_skills: resume.missing_skills,
-                        suggestions: resume.suggestions,
-                        interview_questions: resume.interview_questions || [],
-                      })
-                    }
-                    className='bg-blue-500 hover:bg-blue-600 px-5 py-2 rounded-xl font-semibold'
-                  >
-                    Download PDF
-                  </button>
+                          interview_questions: resume.interview_questions || [],
+                        })
+                      }
+                      className='bg-blue-500 hover:bg-blue-600 p-3 rounded-xl'
+                      title='Download PDF'
+                    >
+                      <FaDownload />
+                    </button>
+                  </div>
                 </div>
               </div>
             ))}
